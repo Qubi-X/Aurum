@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vol Desk: Deriv volatility index analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{--ink:#070b12;--glow:#0c2230;--panel:#0e141d;--panel2:#141c27;--line:#212c3b;--text:#e6ecf2;--mute:#8793a3;--acc:#32d4c6;--acc2:#8af0e6;--up:#3ddc97;--down:#ff5f6d;--wait:#a5b1ff;--warn:#2a2108;--warnb:#5b4a10;--serif:"Instrument Serif",Georgia,serif;--sans:Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+:root[data-theme=light]{--ink:#eff4f6;--glow:#cfe9ec;--panel:#fff;--panel2:#f8fbfc;--line:#d9e3e8;--text:#14202b;--mute:#5d6b7a;--acc:#0a8f86;--acc2:#0fb3a8;--up:#0b9a5f;--down:#d33a48;--wait:#4757d1;--warn:#fff4d6;--warnb:#e8cf85}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(1100px 560px at 85% -10%,var(--glow) 0,transparent 60%),var(--ink);color:var(--text);font:15px/1.55 var(--sans);min-height:100vh;transition:background .3s}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 20px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.brand{font:400 27px var(--serif);display:flex;align-items:center;gap:10px}
+.brand i{width:12px;height:12px;border-radius:3px;background:linear-gradient(135deg,var(--acc2),var(--acc));box-shadow:0 0 16px var(--acc);transform:rotate(45deg)}
+.tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:var(--mute);font-size:13px}
+button{font:600 14px var(--sans);cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 14px}
+#refresh{background:linear-gradient(135deg,var(--acc2),var(--acc));color:#02201e;border:0;padding:11px 20px;display:flex;gap:8px;align-items:center}
+#refresh:disabled{opacity:.7;cursor:wait}#refresh svg{width:16px;height:16px}
+.spin svg{animation:sp .9s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+label.t{display:flex;align-items:center;gap:7px;cursor:pointer}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.tab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer;text-align:left}
+.tab.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.tab b{display:block;font-size:13px}.tab span{font-variant-numeric:tabular-nums;font-weight:600}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:20px}
+.card h2{font:600 14px var(--sans);color:var(--mute);margin-bottom:12px}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-bottom:16px}
+.price{font:400 clamp(50px,8vw,92px)/1 var(--serif);font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}.wait{color:var(--wait)}
+.sub{color:var(--mute);font-size:13px;margin-top:8px}
+.vword{font:400 clamp(44px,7vw,78px)/1 var(--serif)}
+.meter{height:8px;border-radius:99px;background:var(--line);margin:14px 0 6px;overflow:hidden}.meter b{display:block;height:100%;transition:width .6s}
+.pairs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{font-size:12.5px;padding:4px 11px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}.pill.on{border-color:var(--acc);color:var(--acc)}
+.grid2{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:16px}
+.eq{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+#chart{height:480px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px}dt{color:var(--mute)}dd{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.ck{list-style:none;padding:0}.ck li{display:flex;gap:10px;margin:7px 0}.ck i{font-style:normal;font-weight:700;width:18px}
+.sec{margin:26px 0 6px;font:400 30px var(--serif)}.secs{color:var(--mute);font-size:13.5px;margin-bottom:12px}
+.play p{margin:8px 0;max-width:70ch}.play ul{padding-left:18px}.play li{margin:5px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th{color:var(--mute);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}tr.row{cursor:pointer}tr.row:hover td{background:var(--panel2)}
+.warn{background:var(--warn);border:1px solid var(--warnb);border-radius:12px;padding:11px 16px;margin-bottom:14px;display:none}
+.stats{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:10px}.stats b{font:400 30px var(--serif);display:block}
+.err{color:var(--down)}
+footer{color:var(--mute);font-size:12.5px;margin-top:30px;max-width:940px}
+@media(max-width:1000px){.hero,.grid2,.eq{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(2,1fr)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand"><i></i>Vol Desk <span style="font:500 13px var(--sans);color:var(--mute)">Deriv volatility index agent</span></div>
+  <div class="tools"><span id="stamp">Connecting…</span>
+    <label class="t"><input type="checkbox" id="auto"> Auto refresh every minute</label>
+    <button id="theme">Light mode</button>
+    <button id="refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>Refresh</button></div>
+</header>
+<div class="warn" id="warn"></div>
+<div class="tabs" id="tabs"></div>
+
+<section class="hero">
+  <div class="card"><h2 id="mname">Volatility</h2><div class="price" id="price">…</div><div class="sub" id="mmeta"></div><div class="sub" id="regime"></div></div>
+  <div class="card"><h2>Agent decision</h2><div class="vword wait" id="vword">…</div>
+    <div class="meter"><b id="mbar" style="width:0"></b></div><div class="sub" id="vsub"></div>
+    <div class="sub" id="auto-tf"></div><div class="pairs" id="pairs"></div></div>
+</section>
+
+<section class="grid2">
+  <div class="card"><h2 id="ctitle">Chart</h2><div id="chart"></div></div>
+  <div class="card"><h2>Trade plan</h2><dl id="plan"><dt>Waiting for data</dt><dd></dd></dl><hr>
+    <h2>Setup checklist (all must pass)</h2><ul class="ck" id="ck"></ul><hr>
+    <h2>Risk per trade</h2><div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+      <label class="sub" style="margin:0">Balance ($)<br><input type="number" id="bal" value="100" min="1" style="width:100px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--ink);color:var(--text)"></label>
+      <div><b id="riskd" style="font:400 28px var(--serif);color:var(--acc)">-</b><div class="sub" style="margin:0">to risk (1%). Set your stake or stop so a loss equals this.</div></div></div></div>
+</section>
+
+<h2 class="sec">Strategy playbook for this market</h2><div class="secs" id="psub"></div>
+<section class="card play" id="play"></section>
+
+<h2 class="sec">Market scanner</h2><div class="secs">All ten volatility indices, ranked by how close each is to a valid setup (quick 5 minute scan). Select a row for the full multi-timeframe analysis.</div>
+<section class="card" style="overflow:auto"><table><thead><tr><th>Market</th><th>Live price</th><th>Volatility now</th><th>Strategy</th><th>Setup readiness</th></tr></thead><tbody id="scan"></tbody></table></section>
+
+<h2 class="sec">Signal tracker</h2><div class="secs">Every Buy or Sell the agent issues is logged and settled automatically against live ticks (win = 1.5R, loss = 1R). This is your proof of whether the model has an edge.</div>
+<section class="card"><div class="stats" id="stats"></div><table><thead><tr><th>Time</th><th>Market</th><th>Side</th><th>Entry</th><th>Stop</th><th>Target</th><th>Result</th></tr></thead><tbody id="sigs"></tbody></table>
+<div style="margin-top:12px"><button id="clear">Clear history</button></div></section>
+
+<footer>Deriv synthetic indices are generated by a random number engine. They have no news, no fundamentals, and Deriv designs them with constant volatility, so no method can promise to predict direction. This agent does what can honestly be done: it reads volatility regime, trend and stretch on several timeframes, only signals when every rule in a market-specific strategy lines up, sizes stops from ATR, and measures its own results in the tracker. If the tracker shows a win rate near or below 40 percent over many signals, there is no edge and you should not trade it with real money. Educational only, not financial advice. Leveraged trading can lose your whole stake.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const clamp=(v,a=-1,b=1)=>Math.max(a,Math.min(b,v));
+const fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const TF={60:'M1',300:'M5',900:'M15',3600:'H1'};
+const R5=[[900,300],[300,60]],R1=[[3600,900],[900,300]],RH=[[300,60],[900,300]],RF=[[900,300],[300,60]];
+const MK=[
+ {s:'R_10',n:'Volatility 10',v:10,st:'rev',pairs:R5},{s:'R_25',n:'Volatility 25',v:25,st:'rev',pairs:R5},{s:'R_50',n:'Volatility 50',v:50,st:'pull',pairs:[[900,300],[3600,900]]},
+ {s:'R_75',n:'Volatility 75',v:75,st:'brk',pairs:R1},{s:'R_100',n:'Volatility 100',v:100,st:'brk',pairs:R1},
+ {s:'1HZ10V',n:'Volatility 10 (1s)',v:10,hz:1,st:'rev',pairs:RH},{s:'1HZ25V',n:'Volatility 25 (1s)',v:25,hz:1,st:'rev',pairs:RH},{s:'1HZ50V',n:'Volatility 50 (1s)',v:50,hz:1,st:'pull',pairs:RF},
+ {s:'1HZ75V',n:'Volatility 75 (1s)',v:75,hz:1,st:'brk',pairs:RF},{s:'1HZ100V',n:'Volatility 100 (1s)',v:100,hz:1,st:'brk',pairs:RF}];
+const STR={
+ rev:{name:'Band reversion',k:1.2,how:'Fades stretched moves back toward the middle. Needs price at a Bollinger band, RSI at an extreme, a higher timeframe that is not strongly trending against it, and volatility that is not exploding.',tf:'Bias on M15, entry on M5 (M5 and M1 when faster).'},
+ pull:{name:'Trend pullback',k:1.5,how:'Joins a clear trend after a dip. Needs a strong higher-timeframe trend, price back near the 20 EMA, RSI cooled to the pullback zone, and a candle closing back in trend direction.',tf:'Bias on M15, entry on M5; switches to H1 and M15 when that pair is cleaner.'},
+ brk:{name:'Momentum breakout',k:1.8,how:'Rides volatility bursts. Needs the higher timeframe to agree, a close beyond the 20-bar extreme, expanding ATR, and a strong momentum candle. Stops are wider because these markets whip.',tf:'Bias on H1, entry on M15 (M15 and M5 when faster).'}};
+const PERS={10:'The calmest index: small, orderly swings that revert often. Tight stops and patient entries suit it.',25:'Calm but livelier than Volatility 10. Reversions still work; give stops a little more room.',50:'The balanced index: trends build and pull back cleanly, which suits pullback entries.',75:'Fast with sudden bursts. Breakouts work, but only with expansion and a trend behind them. Expect wide candles.',100:'The most violent index. Moves are large and fast; trade only confirmed bursts and keep risk small.'};
+let SEL='R_75',D={},SC={},LIVE={},LAST={},ws,open=false,rid=1,P={},timer=null,RES=null;
+
+/* Deriv websocket */
+function connect(){return new Promise((res,rej)=>{ws=new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+  ws.onopen=()=>{open=true;MK.forEach(m=>ws.send(JSON.stringify({ticks:m.s,subscribe:1})));res();};
+  ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.msg_type==='tick'&&m.tick){onTick(m.tick);return;}const p=P[m.req_id];if(p){delete P[m.req_id];m.error?p.rej(new Error(m.error.message)):p.res(m);}};
+  ws.onclose=()=>{open=false;setTimeout(()=>connect().catch(()=>{}),3000);};ws.onerror=()=>rej(new Error('ws'));});}
+const send=o=>new Promise((res,rej)=>{if(!open)return rej(new Error('offline'));const id=rid++;P[id]={res,rej};ws.send(JSON.stringify({...o,req_id:id}));setTimeout(()=>{if(P[id]){delete P[id];rej(new Error('timeout'));}},12000);});
+const hist=(s,g,n)=>send({ticks_history:s,adjust_start_time:1,count:n,end:'latest',granularity:g,style:'candles'}).then(m=>m.candles.map(k=>({time:k.epoch,open:+k.open,high:+k.high,low:+k.low,close:+k.close})));
+setInterval(()=>{if(open)ws.send('{"ping":1}');},30000);
+
+/* indicators */
+const ema=(a,p)=>{const k=2/(p+1);let e=a[0];return a.map((v,i)=>{if(i)e=v*k+e*(1-k);return e;});};
+const atrS=(c,p=14)=>{let a=0;return c.map((x,i)=>{const t=i?Math.max(x.high-x.low,Math.abs(x.high-c[i-1].close),Math.abs(x.low-c[i-1].close)):x.high-x.low;a=i<p?(a*i+t)/(i+1):(a*(p-1)+t)/p;return a;});};
+const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[s.length>>1];};
+const rsi=(cl,p=14)=>{let g=0,l=0;for(let i=cl.length-p;i<cl.length;i++){const d=cl[i]-cl[i-1];if(d>0)g+=d;else l-=d;}return l===0?100:100-100/(1+g/l);};
+function ind(c){const cl=c.map(k=>k.close),n=cl.length-1,A=atrS(c),a=A[n],E20=ema(cl,20),E50=ema(cl,50),w=cl.slice(-20),m=w.reduce((x,y)=>x+y,0)/20,sd=Math.sqrt(w.reduce((x,y)=>x+(y-m)**2,0)/20);
+  const ret=cl.slice(-101).map((v,i,x)=>i?Math.log(v/x[i-1]):0).slice(1),mu=ret.reduce((x,y)=>x+y,0)/ret.length;let nu=0,de=0;ret.forEach((v,i)=>{de+=(v-mu)**2;if(i)nu+=(v-mu)*(ret[i-1]-mu);});
+  return{px:cl[n],a,e20:E20[n],e50:E50[n],E20,pb:sd?(cl[n]-(m-2*sd))/(4*sd):.5,r:rsi(cl),hi:Math.max(...c.slice(-21,-1).map(k=>k.high)),lo:Math.min(...c.slice(-21,-1).map(k=>k.low)),ratio:a/med(A.slice(-100)),ac:de?nu/de:0,body:Math.abs(c[n].close-c[n].open),up:c[n].close>c[n].open};}
+const trend=c=>{const i=ind(c);return clamp((i.e20-i.e50)/(1.2*i.a))*.6+clamp((i.px-i.e50)/(2.5*i.a))*.4;};
+
+/* strategy engine */
+function evaluate(m,bc,ec,live){
+  const b=trend(bc),I=ind(ec),px=live||I.px;let side,conds,fit,edge;
+  if(m.st==='rev'){side=I.pb<.5?1:-1;const s=side;conds=[['Price at the '+(s>0?'lower':'upper')+' Bollinger band',s>0?I.pb<.08:I.pb>.92],['RSI '+(s>0?'below 32':'above 68')+' (now '+Math.round(I.r)+')',s>0?I.r<32:I.r>68],['Higher timeframe not strongly against',b*s>-.6],['Volatility not exploding (ratio '+fmt(I.ratio)+')',I.ratio<1.4]];fit=I.ratio<1.2;edge=I.ac<-.03;}
+  else if(m.st==='pull'){side=b>.15?1:b<-.15?-1:0;const s=side||1;conds=[['Higher-timeframe trend is clear',Math.abs(b)>=.35],['Pulled back near the 20 EMA',Math.abs(px-I.e20)<=.7*I.a&&s*(px-I.e50)>0],['RSI cooled to '+(s>0?'38-55':'45-62')+' (now '+Math.round(I.r)+')',s>0?I.r>=38&&I.r<=55:I.r>=45&&I.r<=62],['Last candle closes in trend direction',s>0?I.up:!I.up]];fit=I.ratio>.8&&I.ratio<1.5;edge=I.ac>.03;}
+  else{side=px>I.hi?1:px<I.lo?-1:(b>=0?1:-1);const s=side;conds=[['Higher timeframe agrees',b*s>=.2],['Broke the 20-bar '+(s>0?'high':'low'),s>0?px>I.hi:px<I.lo],['Volatility expanding (ratio '+fmt(I.ratio)+')',I.ratio>=1.1],['Strong momentum candle',I.body>=.6*I.a]];fit=I.ratio>=1.1;edge=I.ac>.03;}
+  const ok=conds.filter(c=>c[1]).length,conf=Math.round(ok/4*70+(edge?15:0)+(fit?15:0)),go=ok===4&&(m.st!=='pull'||side!==0);
+  return{dir:go?(side>0?'BUY':'SELL'):'WAIT',side,conf,ok,conds,b,I,sl:STR[m.st].k*I.a,fit,edge};
+}
+function autoTF(m){let best=null,all=[];
+  m.pairs.forEach(([bg,eg])=>{if(!D[bg]||!D[eg])return;const r=evaluate(m,D[bg],D[eg],LIVE[m.s]);r.bg=bg;r.eg=eg;r.rank=(r.dir!=='WAIT'?100:0)+r.conf;all.push(r);if(!best||r.rank>best.rank)best=r;});
+  return{best,all};}
+
+/* signal tracker */
+let SIG=[];try{SIG=JSON.parse(localStorage.getItem('dv-sig')||'[]');}catch(e){}
+const save=()=>{try{localStorage.setItem('dv-sig',JSON.stringify(SIG.slice(-200)));}catch(e){}};
+function logSig(m,r){if(r.dir==='WAIT')return;const px=LIVE[m.s]||r.I.px,sg=r.side;if(SIG.some(s=>s.sym===m.s&&s.dir===r.dir&&s.st==='open'))return;
+  SIG.push({sym:m.s,n:m.n,dir:r.dir,e:px,sl:px-sg*r.sl,tp:px+sg*r.sl*1.5,t:Date.now(),st:'open'});save();}
+function check(sym,q){let ch=false;SIG.forEach(s=>{if(s.st!=='open'||s.sym!==sym)return;const g=s.dir==='BUY'?1:-1;if(g*(q-s.sl)<=0){s.st='loss';ch=true;}else if(g*(q-s.tp)>=0){s.st='win';ch=true;}else if(Date.now()-s.t>4*36e5){s.st='expired';ch=true;}});if(ch){save();renderSig();}}
+function renderSig(){const w=SIG.filter(s=>s.st==='win').length,l=SIG.filter(s=>s.st==='loss').length,n=w+l,net=w*1.5-l;
+  $('#stats').innerHTML='<div><b>'+SIG.length+'</b><span class="sub">signals logged</span></div><div><b>'+(n?Math.round(w/n*100)+'%':'-')+'</b><span class="sub">win rate ('+n+' settled)</span></div><div><b class="'+(net>=0?'up':'down')+'">'+(net>0?'+':'')+fmt(net,1)+'R</b><span class="sub">net result</span></div>'+(n>=10&&w/n<.4?'<div class="err" style="max-width:300px">Win rate is below the 40% break-even for a 1.5R target. The model is not showing an edge.</div>':'');
+  $('#sigs').innerHTML=SIG.slice(-10).reverse().map(s=>{const c=s.st==='win'?'up':s.st==='loss'?'down':'wait';return '<tr><td>'+new Date(s.t).toLocaleTimeString()+'</td><td>'+s.n+'</td><td class="'+(s.dir==='BUY'?'up':'down')+'">'+s.dir+'</td><td>'+fmt(s.e,3)+'</td><td>'+fmt(s.sl,3)+'</td><td>'+fmt(s.tp,3)+'</td><td class="'+c+'">'+(s.st==='open'?'Open':s.st==='win'?'+1.5R':s.st==='loss'?'-1R':'Expired')+'</td></tr>';}).join('')||'<tr><td colspan="7" class="sub">No signals yet. The agent only signals when every rule passes.</td></tr>';}
+
+/* chart */
+let CH=null,CS=null,ES=null,LINES=[],CG=300;
+const th=()=>document.documentElement.dataset.theme;
+const copt=()=>({layout:{background:{color:'transparent'},textColor:th()==='dark'?'#8793a3':'#5d6b7a'},grid:{vertLines:{color:th()==='dark'?'#1b2531':'#e3ebef'},horzLines:{color:th()==='dark'?'#1b2531':'#e3ebef'}},timeScale:{timeVisible:true,secondsVisible:false},rightPriceScale:{borderVisible:false}});
+function drawChart(ec,g,r,m){
+  if(!window.LightweightCharts){$('#chart').innerHTML='<p class="err">Chart library could not load. Check your connection.</p>';return;}
+  if(!CH){CH=LightweightCharts.createChart($('#chart'),{...copt(),autoSize:true});CS=CH.addCandlestickSeries({upColor:'#3ddc97',downColor:'#ff5f6d',borderVisible:false,wickUpColor:'#3ddc97',wickDownColor:'#ff5f6d'});ES=CH.addLineSeries({color:'#32d4c6',lineWidth:2,priceLineVisible:false,lastValueVisible:false});}
+  CG=g;CS.setData(ec);ES.setData(ema(ec.map(k=>k.close),20).map((v,i)=>({time:ec[i].time,value:v})));
+  LINES.forEach(l=>CS.removePriceLine(l));LINES=[];
+  if(r.dir!=='WAIT'){const px=LIVE[m.s]||r.I.px,sg=r.side;[['Entry',px,'#9aa7b5'],['Stop',px-sg*r.sl,'#ff5f6d'],['TP1',px+sg*r.sl*1.5,'#3ddc97'],['TP2',px+sg*r.sl*2.5,'#3ddc97']].forEach(([t,p,c])=>LINES.push(CS.createPriceLine({price:p,color:c,lineWidth:1,lineStyle:2,title:t})));}
+  CH.timeScale().fitContent();
+}
+function onTick(t){const q=+t.quote,prev=LIVE[t.symbol];LIVE[t.symbol]=q;
+  const el=document.getElementById('tk-'+t.symbol);if(el){el.textContent=fmt(q,3);el.className=prev!=null&&q!==prev?(q>prev?'up':'down'):'';}
+  if(t.symbol===SEL){$('#price').textContent=fmt(q,3);
+    if(CS&&D[CG]){const last=D[CG][D[CG].length-1],bk=Math.floor(t.epoch/CG)*CG;if(bk===last.time){last.high=Math.max(last.high,q);last.low=Math.min(last.low,q);last.close=q;}else{D[CG].push({time:bk,open:q,high:q,low:q,close:q});}CS.update(D[CG][D[CG].length-1]);}}
+  check(t.symbol,q);}
+
+/* render */
+function tabs(){$('#tabs').innerHTML=MK.map(m=>'<div class="tab'+(m.s===SEL?' on':'')+'" tabindex="0" role="button" data-s="'+m.s+'"><b>'+m.n+'</b><span id="tk-'+m.s+'">'+(LIVE[m.s]!=null?fmt(LIVE[m.s],3):'-')+'</span></div>').join('');}
+const reg=r=>r<.8?['Quiet','wait']:r<1.2?['Normal','']:r<1.6?['Expanding','up']:['Explosive','down'];
+function scanView(){const rows=MK.filter(m=>SC[m.s]).map(m=>{const e=evaluate(m,SC[m.s],SC[m.s],LIVE[m.s]);return{m,e};}).sort((a,b)=>(b.e.dir!=='WAIT')-(a.e.dir!=='WAIT')||b.e.conf-a.e.conf);
+  $('#scan').innerHTML=rows.map(({m,e})=>{const g=reg(e.I.ratio);return '<tr class="row" data-s="'+m.s+'"><td><b>'+m.n+'</b></td><td id="">'+(LIVE[m.s]!=null?fmt(LIVE[m.s],3):'-')+'</td><td class="'+g[1]+'">'+g[0]+' ('+fmt(e.I.ratio)+'x)</td><td>'+STR[m.st].name+'</td><td><b class="'+(e.dir==='BUY'?'up':e.dir==='SELL'?'down':'wait')+'">'+(e.dir==='WAIT'?e.ok+' of 4 rules':e.dir+' now')+'</b> <span class="sub">'+e.conf+'%</span></td></tr>';}).join('');}
+function analyze(){
+  const m=MK.find(k=>k.s===SEL),{best,all}=autoTF(m);tabs();
+  $('#mname').textContent=m.n+' ('+m.s+')';if(LIVE[m.s]!=null)$('#price').textContent=fmt(LIVE[m.s],3);
+  if(!best){$('#vword').textContent='No data';$('#warn').style.display='block';$('#warn').textContent='Candles for this market did not load. Press Refresh.';return;}
+  const r=best,g=reg(r.I.ratio),S=STR[m.st];RES=r;
+  $('#regime').innerHTML='Volatility now: <b class="'+g[1]+'">'+g[0]+'</b> ('+fmt(r.I.ratio)+'x its recent norm). Price behavior: '+(Math.abs(r.I.ac)<.08?'random-like, no measurable structure':r.I.ac>0?'slightly trending':'slightly mean-reverting')+' (autocorrelation '+fmt(r.I.ac,2)+').';
+  $('#mmeta').textContent='ATR on '+TF[r.eg]+': '+fmt(r.I.a,3)+' points. Higher-timeframe trend score '+(r.b>0?'+':'')+fmt(r.b)+'.';
+  const vw=$('#vword');vw.textContent=r.dir==='BUY'?'Buy':r.dir==='SELL'?'Sell':'Stand aside';vw.className='vword '+(r.dir==='BUY'?'up':r.dir==='SELL'?'down':'wait');
+  $('#mbar').style.width=r.conf+'%';$('#mbar').style.background=r.dir==='BUY'?'var(--up)':r.dir==='SELL'?'var(--down)':'var(--wait)';
+  $('#vsub').textContent=r.dir==='WAIT'?'Setup readiness '+r.conf+'%. '+r.ok+' of 4 rules pass.':'Confidence '+r.conf+'%. All 4 rules pass.';
+  $('#auto-tf').innerHTML='Auto-selected: <b>'+TF[r.bg]+' for bias, '+TF[r.eg]+' for entry</b> because it is the cleaner of this market\'s timeframe pairs right now.';
+  $('#pairs').innerHTML=all.map(a=>'<span class="pill'+(a===r?' on':'')+'">'+TF[a.bg]+' bias / '+TF[a.eg]+' entry: '+(a.dir==='WAIT'?a.ok+'/4 rules':a.dir)+' ('+a.conf+'%)</span>').join('');
+  $('#ck').innerHTML=r.conds.map(c=>'<li><i class="'+(c[1]?'up':'down')+'">'+(c[1]?'✓':'✗')+'</i><span>'+c[0]+'</span></li>').join('');
+  const px=LIVE[m.s]||r.I.px,sg=r.side,row=(a,b,c)=>'<dt>'+a+'</dt><dd'+(c?' class="'+c+'"':'')+'>'+b+'</dd>';
+  $('#plan').innerHTML=r.dir!=='WAIT'?row('Direction',r.dir==='BUY'?'Buy (long)':'Sell (short)',r.dir==='BUY'?'up':'down')+row('Strategy',S.name)+row('Bias / entry',TF[r.bg]+' / '+TF[r.eg])+row('Entry',fmt(px,3))+row('Stop loss',fmt(px-sg*r.sl,3),'down')+row('Take profit 1 (1.5R)',fmt(px+sg*r.sl*1.5,3),'up')+row('Take profit 2 (2.5R)',fmt(px+sg*r.sl*2.5,3),'up')+row('Stop distance',fmt(r.sl,3)+' points')+row('Move stop','to break-even at TP1')
+    :row('Direction','No trade','wait')+row('Strategy',S.name)+row('Waiting for',(r.conds.find(c=>!c[1])||[''])[0]);
+  $('#riskd').textContent='$'+fmt((+$('#bal').value||0)*.01);
+  $('#psub').textContent=S.name+' is the primary strategy for '+m.n+'.';
+  $('#play').innerHTML='<p><b>Why this market:</b> '+PERS[m.v]+(m.hz?' It ticks every second, so it is noisier: the agent works on faster timeframes and still demands the higher-timeframe filter.':'')+'</p><p><b>How the strategy works:</b> '+S.how+'</p><p><b>Timeframes:</b> '+S.tf+' The agent tests every pair for this market and switches to the one with the cleaner setup.</p><ul><li>Stop loss: '+S.k+' times ATR of the entry timeframe, so it widens when the market gets wild.</li><li>Targets: 1.5R and 2.5R. Close half at TP1 and move the stop to break-even.</li><li>Risk: 1% of balance per trade, and stop for the day after 3 losses in a row.</li><li>Take only the signal on this page: if a rule fails, the setup is not valid.</li></ul>';
+  const ec=D[r.eg];$('#ctitle').textContent=m.n+', '+TF[r.eg]+' candles with 20 EMA'+(r.dir!=='WAIT'?' and your trade levels':'');drawChart(ec,r.eg,r,m);
+  logSig(m,r);renderSig();scanView();$('#warn').style.display='none';
+}
+async function loadFull(){const gs=[60,300,900,3600],res=await Promise.allSettled(gs.map(g=>hist(SEL,g,200)));D={};gs.forEach((g,i)=>{if(res[i].status==='fulfilled')D[g]=res[i].value;});}
+async function refresh(full=true){
+  const b=$('#refresh');b.disabled=true;b.classList.add('spin');
+  try{if(!open)await connect();}catch(e){$('#warn').style.display='block';$('#warn').textContent='Could not connect to Deriv. Check your internet and press Refresh.';b.disabled=false;b.classList.remove('spin');return;}
+  const jobs=[loadFull()];if(full)jobs.push(...MK.map(m=>hist(m.s,300,120).then(c=>{SC[m.s]=c;}).catch(()=>{})));
+  await Promise.allSettled(jobs);analyze();$('#stamp').textContent='Updated '+new Date().toLocaleTimeString()+', live ticks streaming';b.disabled=false;b.classList.remove('spin');
+}
+function pick(e){const t=e.target.closest('[data-s]');if(!t)return;SEL=t.dataset.s;refresh(false);scrollTo({top:0,behavior:'smooth'});}
+$('#tabs').addEventListener('click',pick);$('#tabs').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(e);}});$('#scan').addEventListener('click',pick);
+$('#refresh').addEventListener('click',()=>refresh(true));
+$('#auto').addEventListener('change',e=>{clearInterval(timer);if(e.target.checked)timer=setInterval(()=>refresh(true),60000);});
+$('#bal').addEventListener('input',()=>{$('#riskd').textContent='$'+fmt((+$('#bal').value||0)*.01);});
+$('#clear').addEventListener('click',()=>{SIG=[];save();renderSig();});
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('vol-theme',t);}catch(e){}$('#theme').textContent=t==='dark'?'Light mode':'Dark mode';if(CH)CH.applyOptions(copt());}
+let sv=null;try{sv=localStorage.getItem('vol-theme');}catch(e){}
+setTheme(sv||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));
+$('#theme').addEventListener('click',()=>setTheme(th()==='dark'?'light':'dark'));
+tabs();renderSig();refresh(true);
+</script>
+</body>
+</html>
