@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vol Desk: Volatility Playbook agents</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{--ink:#070b12;--glow:#0c2230;--panel:#0e141d;--panel2:#141c27;--line:#212c3b;--text:#e6ecf2;--mute:#8793a3;--acc:#32d4c6;--acc2:#8af0e6;--up:#3ddc97;--down:#ff5f6d;--wait:#a5b1ff;--warn:#2a2108;--warnb:#5b4a10;--serif:"Instrument Serif",Georgia,serif;--sans:Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+:root[data-theme=light]{--ink:#eff4f6;--glow:#cfe9ec;--panel:#fff;--panel2:#f8fbfc;--line:#d9e3e8;--text:#14202b;--mute:#5d6b7a;--acc:#0a8f86;--acc2:#0fb3a8;--up:#0b9a5f;--down:#d33a48;--wait:#4757d1;--warn:#fff4d6;--warnb:#e8cf85}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(1100px 560px at 85% -10%,var(--glow) 0,transparent 60%),var(--ink);color:var(--text);font:15px/1.55 var(--sans);min-height:100vh;transition:background .3s}
+.wrap{max-width:1280px;margin:0 auto;padding:18px 20px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.brand{font:400 27px var(--serif);display:flex;align-items:center;gap:10px}
+.brand i{width:12px;height:12px;border-radius:3px;background:linear-gradient(135deg,var(--acc2),var(--acc));box-shadow:0 0 16px var(--acc);transform:rotate(45deg)}
+.tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:var(--mute);font-size:13px}
+button{font:600 14px var(--sans);cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 14px}
+#refresh{background:linear-gradient(135deg,var(--acc2),var(--acc));color:#02201e;border:0;padding:11px 20px;display:flex;gap:8px;align-items:center}
+#refresh:disabled{opacity:.7;cursor:wait}#refresh svg{width:16px;height:16px}
+.spin svg{animation:sp .9s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+label.t{display:flex;align-items:center;gap:7px;cursor:pointer}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.tab{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 12px;cursor:pointer;text-align:left}
+.tab.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.tab b{display:block;font-size:13px}.tab span{font-variant-numeric:tabular-nums;font-weight:600}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:20px}
+.card h2{font:600 14px var(--sans);color:var(--mute);margin-bottom:12px}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-bottom:16px}
+.price{font:400 clamp(50px,8vw,92px)/1 var(--serif);font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}.wait{color:var(--wait)}
+.sub{color:var(--mute);font-size:13px;margin-top:8px}
+.vword{font:400 clamp(44px,7vw,78px)/1 var(--serif)}
+.meter{height:8px;border-radius:99px;background:var(--line);margin:14px 0 6px;overflow:hidden}.meter b{display:block;height:100%;transition:width .6s}
+.pairs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{font-size:12.5px;padding:4px 11px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}.pill.on{border-color:var(--acc);color:var(--acc)}
+.grid2{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:16px}
+.eq{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+#chart{height:480px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:8px 16px}dt{color:var(--mute)}dd{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.ck{list-style:none;padding:0}.ck li{display:flex;gap:10px;margin:7px 0}.ck i{font-style:normal;font-weight:700;width:18px}
+.sec{margin:26px 0 6px;font:400 30px var(--serif)}.secs{color:var(--mute);font-size:13.5px;margin-bottom:12px}
+.play p{margin:8px 0;max-width:70ch}.play ul{padding-left:18px}.play li{margin:5px 0}
+table{width:100%;border-collapse:collapse;font-size:14px}th{color:var(--mute);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}tr.row{cursor:pointer}tr.row:hover td{background:var(--panel2)}
+.warn{background:var(--warn);border:1px solid var(--warnb);border-radius:12px;padding:11px 16px;margin-bottom:14px;display:none}
+.stats{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:10px}.stats b{font:400 30px var(--serif);display:block}
+.err{color:var(--down)}
+footer{color:var(--mute);font-size:12.5px;margin-top:30px;max-width:940px}
+@media(max-width:1000px){.hero,.grid2,.eq{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(2,1fr)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand"><i></i>Vol Desk <span style="font:500 13px var(--sans);color:var(--mute)">Volatility Playbook agents</span></div>
+  <div class="tools"><span id="stamp">Connecting…</span>
+    <button id="theme">Light mode</button>
+    <button id="refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>Resync</button></div>
+</header>
+<div class="warn" id="warn"></div>
+<div class="tabs" id="tabs"></div>
+
+<section class="hero">
+  <div class="card"><h2 id="mname">Volatility</h2><div class="price" id="price">…</div><div class="sub" id="mmeta"></div><div class="sub" id="regime"></div></div>
+  <div class="card"><h2>Agent decision (playbook)</h2><div class="vword wait" id="vword">…</div>
+    <div class="meter"><b id="mbar" style="width:0"></b></div><div class="sub" id="vsub"></div>
+    <div class="sub" id="auto-tf"></div><div class="pairs" id="pairs"></div></div>
+</section>
+
+<section class="grid2">
+  <div class="card"><h2 id="ctitle">Chart</h2><div class="pairs" style="margin:0 0 10px"><span class="pill on" id="cb1" data-c="1" tabindex="0" style="cursor:pointer">Playbook chart (synced, with trade levels)</span><span class="pill" id="cb2" data-c="2" tabindex="0" style="cursor:pointer">charts.deriv.com</span></div><div id="chart"></div><div id="dview" style="display:none"><div class="sub" id="dsetup" style="margin:0 0 8px"></div><iframe id="dframe" title="charts.deriv.com" style="width:100%;height:480px;border:1px solid var(--line);border-radius:12px;background:#fff" referrerpolicy="no-referrer"></iframe></div></div>
+  <div class="card"><h2>Trade plan</h2><dl id="plan"><dt>Waiting for data</dt><dd></dd></dl><hr>
+    <h2>Setup checklist (all must pass)</h2><ul class="ck" id="ck"></ul><hr>
+    <h2>Risk per trade</h2><div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+      <label class="sub" style="margin:0">Balance ($)<br><input type="number" id="bal" value="100" min="1" style="width:100px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--ink);color:var(--text)"></label>
+      <div><b id="riskd" style="font:400 28px var(--serif);color:var(--acc)">-</b><div class="sub" style="margin:0;max-width:320px" id="riskn"></div></div></div></div>
+</section>
+
+<h2 class="sec">Strategy playbook for this market</h2><div class="secs" id="psub"></div>
+<section class="card play" id="play"></section>
+
+<h2 class="sec">Market scanner</h2><div class="secs">All ten volatility indices, each with its own always-running agent using its playbook strategy. Select a row to open it.</div>
+<section class="card" style="overflow:auto"><table><thead><tr><th>Market</th><th>Live price</th><th>Volatility now</th><th>Strategy</th><th>Setup readiness</th></tr></thead><tbody id="scan"></tbody></table></section>
+
+<h2 class="sec">Signal tracker</h2><div class="secs">Every entry is paper-traded on live Deriv ticks: stop moves to break-even at +1R, exits at the playbook target or stop. Results are in R. This is your proof of whether the playbook has an edge.</div>
+<section class="card"><div class="stats" id="stats"></div><table><thead><tr><th>Time</th><th>Market</th><th>Strategy</th><th>Side</th><th>Entry</th><th>Stop</th><th>Target</th><th>Result (R)</th></tr></thead><tbody id="sigs"></tbody></table>
+<div style="margin-top:12px"><button id="clear">Clear history</button></div></section>
+
+<footer>Deriv synthetic indices are generated by a random number engine and each tick is independent, so no rule can promise the next move. They have no news, no fundamentals, and Deriv designs them with constant volatility, so no method can promise to predict direction. This agent does what can honestly be done: it reads volatility regime, trend and stretch on several timeframes, only signals when every rule in a market-specific strategy lines up, sizes stops from ATR, and measures its own results in the tracker. If the tracker shows a win rate near or below 40 percent over many signals, there is no edge and you should not trade it with real money. Educational only, not financial advice. Leveraged trading can lose your whole stake.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),fmt=(n,d=2)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const TN={300:'M5',900:'M15',3600:'H1'},GS=[300,900,3600];
+/* Playbook map: [strategy, bias TF, entry TF, half size?] primary first, secondary second */
+const PLAN={10:[['rev',900,300],['pull',3600,900,1]],25:[['sq',900,300],['rev',900,300]],50:[['pull',900,300],['sq',900,300]],75:[['pull',900,300],['brk',3600,900,1]],100:[['brk',3600,900],['pull',3600,900,1]]};
+const RK={10:{r:1,cap:3},25:{r:1,cap:3},50:{r:1,cap:3},75:{r:.75,cap:2},100:{r:.5,cap:2,mt:2}};
+const MK=[0,1].flatMap(h=>[10,25,50,75,100].map(v=>({s:(h?'1HZ'+v+'V':'R_'+v),n:'Volatility '+v+(h?' (1s)':''),v,hz:h,pl:PLAN[v]})));
+const SN={pull:'EMA pullback',sq:'Bollinger squeeze',rev:'Range reversion',brk:'Breakout + retest'};
+const SH={pull:'Trades with the trend after a pause: price pulls back to EMA 50 without touching EMA 200, RSI dips then crosses back through 50, and a candle closes in trend direction. Stop = ATR multiple or beyond the pullback extreme, target 2R, stop to break-even at 1R.',
+sq:'Waits for Bollinger Bands to pinch to their tightest in 50 candles, then trades the first close outside the band in the direction of the higher-timeframe EMA 50. Stop on the far side of the squeeze range, target 2R.',
+rev:'Fades band edges when there is no trend: band touch, RSI beyond 30/70, a reversal candle closing back inside. Stop 1.2x ATR beyond the extreme, target the middle band. Stands aside after two closes outside a band.',
+brk:'Waits for a 20-candle range level to break, then for price to retest and hold it, and enters on a trigger candle closing in the break direction. Stop 2.5x ATR behind the retest, target 2R. Never chases the breakout.'};
+const PERS={10:'Calmest index. Long sideways stretches suit fading band edges, but small candles mean costs take a bigger share.',25:'Compresses into tight coils, then moves. Rewards patience: wait for the squeeze, then trade the break with the higher timeframe.',50:'Balanced, with clean swings. The best market for the core pullback method.',75:'Fast and spiky. Same pullback method with a wider stop, deeper RSI zones, a spike filter and smaller size.',100:'Largest swings. Never chase breakouts: wait for the retest. Wide stops, so half-size positions and at most 2 trades a day.'};
+let SEL='R_75',VI=0,D={},LIVE={},LT={},AG={},ws,open=false,rid=1,P={},booting=false;
+
+/* Deriv WebSocket: same feed that powers charts.deriv.com */
+function connect(){return new Promise((res,rej)=>{ws=new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=1089');
+ ws.onopen=()=>{open=true;MK.forEach(m=>ws.send(JSON.stringify({ticks:m.s,subscribe:1})));res();};
+ ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.msg_type==='tick'&&m.tick){onTick(m.tick);return;}const p=P[m.req_id];if(p){delete P[m.req_id];m.error?p.rej(new Error(m.error.message)):p.res(m);}};
+ ws.onclose=()=>{open=false;setTimeout(init,3000);};ws.onerror=()=>rej(new Error('ws'));});}
+const send=o=>new Promise((res,rej)=>{if(!open)return rej(new Error('offline'));const id=rid++;P[id]={res,rej};ws.send(JSON.stringify({...o,req_id:id}));setTimeout(()=>{if(P[id]){delete P[id];rej(new Error('timeout'));}},15000);});
+const hist=(s,g,n)=>send({ticks_history:s,adjust_start_time:1,count:n,end:'latest',granularity:g,style:'candles'}).then(m=>m.candles.map(k=>({time:k.epoch,open:+k.open,high:+k.high,low:+k.low,close:+k.close})));
+async function hq(s,g){for(let i=0;i<4;i++){try{return await hist(s,g,500);}catch(e){await new Promise(r=>setTimeout(r,1500*(i+1)));}}}
+setInterval(()=>{if(open)ws.send('{"ping":1}');},30000);
+
+/* indicators (Wilder ATR and RSI, EMA, Bollinger 20/2) */
+const ema=(a,p)=>{const k=2/(p+1);let e=a[0];return a.map((v,i)=>i?(e=v*k+e*(1-k)):e);};
+const atrS=(c,p=14)=>{let a=0;return c.map((x,i)=>{const t=i?Math.max(x.high-x.low,Math.abs(x.high-c[i-1].close),Math.abs(x.low-c[i-1].close)):x.high-x.low;a=i<p?(a*i+t)/(i+1):(a*(p-1)+t)/p;return a;});};
+const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[s.length>>1];};
+const rsiS=(cl,p=14)=>{let g=0,l=0;const r=[50];for(let i=1;i<cl.length;i++){const d=cl[i]-cl[i-1],u=d>0?d:0,w=d<0?-d:0;if(i<=p){g+=u/p;l+=w/p;}else{g=(g*(p-1)+u)/p;l=(l*(p-1)+w)/p;}r[i]=i<p?50:l===0?100:100-100/(1+g/l);}return r;};
+const bbS=cl=>cl.map((_,i)=>{if(i<19)return null;let m=0;for(let j=i-19;j<=i;j++)m+=cl[j];m/=20;let v=0;for(let j=i-19;j<=i;j++)v+=(cl[j]-m)**2;const s=Math.sqrt(v/20);return{m,u:m+2*s,l:m-2*s,w:4*s/m};});
+function IND(c){const cl=c.map(k=>k.close);return{c,cl,n:c.length-1,E50:ema(cl,50),E200:ema(cl,200),A:atrS(c),R:rsiS(cl),B:bbS(cl)};}
+function bias(c){const I=IND(c),n=I.n,A=I.A[n],px=I.cl[n],e5=I.E50,e2=I.E200,s5=e5[n]-e5[n-5],s2=e2[n]-e2[n-5];
+ const up=e5[n]>e2[n]&&px>e2[n]&&s5>0&&s2>=0,dn=e5[n]<e2[n]&&px<e2[n]&&s5<0&&s2<=0;
+ return{dir:up?1:dn?-1:0,flat:Math.abs(e5[n]-e2[n])<.8*A&&Math.abs(s5)<.5*A,sl:Math.abs(s5)>.1*A?Math.sign(s5):0};}
+
+/* playbook strategies: each returns side, rule checklist, stop distance, reward multiple */
+function sPull(v,Bc,Ec){const b=bias(Bc),I=IND(Ec),n=I.n,A=I.A[n],c=Ec[n],px=c.close,s=b.dir||(px>I.E50[n]?1:-1),zh=v===75?45:50,zs=v===75?55:50,k=v===75?2:v===100?2.5:1.5,w=Ec.slice(n-8,n+1),
+ ext=s>0?Math.min(...w.map(x=>x.low)):Math.max(...w.map(x=>x.high)),rs=I.R.slice(n-8,n),R0=I.R[n-1],R1=I.R[n];
+ const cn=[['Higher timeframe '+(s>0?'uptrend':'downtrend')+': EMA 50 '+(s>0?'above':'below')+' EMA 200, both sloping',b.dir===s],
+ ['Pulled back to EMA 50, not through EMA 200',s>0?ext<=I.E50[n]+.25*A&&ext>=I.E200[n]:ext>=I.E50[n]-.25*A&&ext<=I.E200[n]],
+ ['RSI dipped to '+(s>0?zh+' or lower':zs+' or higher'),s>0?Math.min(...rs)<=zh:Math.max(...rs)>=zs],
+ ['RSI crossed 50 (now '+Math.round(R1)+') on a closed '+(s>0?'bullish':'bearish')+' candle',s>0?R0<=50&&R1>50&&c.close>c.open:R0>=50&&R1<50&&c.close<c.open],
+ ['Not extended: within 3x ATR of EMA 50',Math.abs(px-I.E50[n])<=3*A]];
+ if(v>=75)cn.push(['No spike candle (over 2x ATR) in last 5 candles',!Ec.slice(n-4,n+1).some(x=>x.high-x.low>2*A)&&Math.abs(c.close-c.open)<2*A]);
+ return{side:s,conds:cn,sl:Math.max(k*A,Math.abs(px-ext)+.1*A),rr:2};}
+function sSq(v,Bc,Ec){const b=bias(Bc),I=IND(Ec),n=I.n,A=I.A[n],c=Ec[n],B=I.B,bw=B.map(x=>x&&x.w),mn=Math.min(...bw.slice(n-50,n)),rec=Math.min(...bw.slice(n-5,n)),
+ s=c.close>B[n].u?1:c.close<B[n].l?-1:(b.sl||1),w=Ec.slice(n-12,n),ext=s>0?Math.min(...w.map(x=>x.low)):Math.max(...w.map(x=>x.high));
+ return{side:s,conds:[['Bands at their tightest of the last 50 candles',rec<=mn*1.08],['Candle closed outside the '+(s>0?'upper':'lower')+' band',s>0?c.close>B[n].u:c.close<B[n].l],['Matches higher-timeframe EMA 50 direction',b.sl===s],['Breakout candle under 2.5x ATR',c.high-c.low<2.5*A]],sl:Math.max(1.5*A,Math.abs(c.close-ext)),rr:2};}
+function sRev(v,Bc,Ec){const b=bias(Bc),I=IND(Ec),n=I.n,A=I.A[n],c=Ec[n],B=I.B,s=c.close<B[n].m?1:-1,w=Ec.slice(n-2,n+1),ext=s>0?Math.min(...w.map(x=>x.low)):Math.max(...w.map(x=>x.high)),
+ pr=s>0?(Ec[n].low<=B[n].l||Ec[n-1].low<=B[n-1].l):(Ec[n].high>=B[n].u||Ec[n-1].high>=B[n-1].u),r=s>0?Math.min(I.R[n],I.R[n-1]):Math.max(I.R[n],I.R[n-1]),
+ sl=Math.abs(c.close-ext)+1.2*A,rw=Math.abs(B[n].m-c.close),out=x=>s>0?I.cl[x]<B[x].l:I.cl[x]>B[x].u;
+ return{side:s,conds:[['Higher-timeframe EMAs flat or tangled (no trend)',b.flat],['Price touched the '+(s>0?'lower':'upper')+' band',pr],['RSI '+(s>0?'under 30':'over 70')+' (extreme '+Math.round(r)+')',s>0?r<30:r>70],['Reversal candle closed back inside the band',!out(n)&&(s>0?c.close>c.open:c.close<c.open)],['Not two closes outside the band in a row',!(out(n-1)&&out(n-2))],['Reward to middle band is at least 1x the stop',rw>=sl]],sl,rr:rw/sl,tp:B[n].m};}
+function sBrk(v,Bc,Ec){const b=bias(Bc),I=IND(Ec),n=I.n,A=I.A[n],c=Ec[n],s=b.dir||1;let lv=null,j0=0;
+ for(let j=n-1;j>=n-25&&lv==null;j--){const p=Ec.slice(j-20,j),H=Math.max(...p.map(x=>x.high)),L=Math.min(...p.map(x=>x.low));if(H-L>7*A)continue;if(s>0?(Ec[j].close>H&&Ec[j-1].close<=H):(Ec[j].close<L&&Ec[j-1].close>=L)){lv=s>0?H:L;j0=j;}}
+ const af=lv==null?[]:Ec.slice(j0+1,n+1),rt=af.length&&(s>0?Math.min(...af.map(x=>x.low))<=lv+.5*A:Math.max(...af.map(x=>x.high))>=lv-.5*A),hold=af.length&&af.every(x=>s>0?x.close>lv:x.close<lv),
+ ext=af.length?(s>0?Math.min(...af.map(x=>x.low)):Math.max(...af.map(x=>x.high))):c.close;
+ const cn=[['Higher timeframe agrees (EMA 50 vs 200)',b.dir===s],['Broke a 20-candle range level'+(lv!=null?' at '+fmt(lv,3):''),lv!=null],['Price retested the level and held',!!rt&&!!hold],['Trigger candle closed in break direction, not chasing',lv!=null&&af.length>1&&(s>0?c.close>c.open&&c.close-lv<2*A:c.close<c.open&&lv-c.close<2*A)]];
+ if(v>=75)cn.push(['No spike candle (over 2x ATR) in last 5 candles',!Ec.slice(n-4,n+1).some(x=>x.high-x.low>2*A)]);
+ return{side:s,conds:cn,sl:Math.max(2.5*A,Math.abs(c.close-ext)+.25*A),rr:2};}
+const SF={pull:sPull,sq:sSq,rev:sRev,brk:sBrk};
+
+/* per-market agent: runs on every closed candle, evaluates primary and secondary strategy */
+function agent(m,fresh){const C=D[m.s];if(!C)return;const out=[];
+ m.pl.forEach(([st,bg,eg,half],i)=>{if(!C[bg]||!C[eg]||C[bg].length<230||C[eg].length<230)return;
+  try{const Ec=C[eg].slice(0,-1),r=SF[st](m.v,C[bg].slice(0,-1),Ec),At=atrS(Ec.slice(-120));Object.assign(r,{st,bg,eg,half,A:At[At.length-1],ratio:At[At.length-1]/med(At.slice(-100))});
+   r.ok=r.conds.filter(x=>x[1]).length;r.go=r.ok===r.conds.length&&r.sl>0;out[i]=r;}catch(e){}});
+ (AG[m.s]=AG[m.s]||{}).res=out;
+ if(fresh)out.forEach(r=>{if(r&&r.go&&fresh.has(r.eg))openTrade(m,r);});}
+
+/* risk gates from the playbook */
+let SIG=[];try{SIG=JSON.parse(localStorage.getItem('dv-sig2')||'[]');}catch(e){}
+const save=()=>{try{localStorage.setItem('dv-sig2',JSON.stringify(SIG.slice(-300)));}catch(e){}},day=()=>new Date().toISOString().slice(0,10);
+const rpct=(m,half)=>RK[m.v].r*(m.hz?.67:1)*(half?.5:1);
+function gate(m){const cf=RK[m.v],mine=SIG.filter(s=>s.sym===m.s),td=mine.filter(s=>s.d===day()),done=mine.filter(s=>s.st!=='open'),R=td.filter(s=>s.st!=='open').reduce((a,s)=>a+s.R,0),l2=done.slice(-2);
+ if(mine.some(s=>s.st==='open'))return'Trade already open';
+ if(R<=-cf.cap/rpct(m,0))return'Daily loss cap reached ('+cf.cap+'%): off until tomorrow';
+ if(l2.length===2&&l2.every(s=>s.R<0)&&l2[1].d===day())return'Two losses in a row: switched off for this session';
+ if(cf.mt&&td.length>=cf.mt)return'Max '+cf.mt+' trades today reached';return'';}
+function openTrade(m,r){if(gate(m))return;const px=LIVE[m.s];if(!px)return;const s=r.side;
+ SIG.push({id:Date.now(),sym:m.s,n:m.n,stn:SN[r.st],half:r.half,dir:s>0?'BUY':'SELL',e:px,sl:px-s*r.sl,tp:r.tp||px+s*r.sl*r.rr,rk:r.sl,t:Date.now(),d:day(),st:'open',R:0,be:0,eg:r.eg,rp:rpct(m,r.half)});save();renderSig();}
+function check(sym,q){let ch=0;SIG.forEach(s=>{if(s.st!=='open'||s.sym!==sym)return;const g=s.dir==='BUY'?1:-1,rn=g*(q-s.e)/s.rk;
+ if(g*(q-s.sl)<=0){s.R=g*(s.sl-s.e)/s.rk;s.st=s.be?'be':'loss';ch=1;}else if(g*(q-s.tp)>=0){s.R=g*(s.tp-s.e)/s.rk;s.st='win';ch=1;}
+ else if(Date.now()-s.t>12*36e5){s.R=rn;s.st='exp';ch=1;}else if(!s.be&&rn>=1){s.be=1;s.sl=s.e;ch=1;}});if(ch){save();renderSig();}}
+function renderSig(){const set=SIG.filter(s=>s.st!=='open'),w=set.filter(s=>s.R>0.05).length,net=set.reduce((a,s)=>a+s.R,0),n=set.length;
+ $('#stats').innerHTML='<div><b>'+SIG.length+'</b><span class="sub">trades logged</span></div><div><b>'+(n?Math.round(w/n*100)+'%':'-')+'</b><span class="sub">win rate ('+n+' closed)</span></div><div><b class="'+(net>=0?'up':'down')+'">'+(net>0?'+':'')+fmt(net,1)+'R</b><span class="sub">net result</span></div><div><b>'+(n?fmt(net/n,2):'-')+'R</b><span class="sub">expectancy per trade</span></div>'+(n>=30&&net/n<=0?'<div class="err" style="max-width:300px">Expectancy is zero or negative over 30+ trades: no edge so far. Do not trade this with real money.</div>':'');
+ $('#sigs').innerHTML=SIG.slice(-12).reverse().map(s=>{const g=s.dir==='BUY'?1:-1,L=LIVE[s.sym],rn=s.st==='open'&&L?g*(L-s.e)/s.rk:s.R,c=s.st==='open'?'wait':s.R>0.05?'up':s.R<-0.05?'down':'wait',lbl={open:'Open',win:'Target hit',loss:'Stopped',be:'Break-even',exp:'Timed out'}[s.st];
+  return'<tr><td>'+new Date(s.t).toLocaleTimeString()+'</td><td>'+s.n+'</td><td>'+s.stn+'</td><td class="'+(g>0?'up':'down')+'">'+s.dir+'</td><td>'+fmt(s.e,3)+'</td><td>'+fmt(s.sl,3)+(s.be?' (BE)':'')+'</td><td>'+fmt(s.tp,3)+'</td><td class="'+c+'">'+lbl+' '+(rn>0?'+':'')+fmt(rn,2)+'R</td></tr>';}).join('')||'<tr><td colspan="8" class="sub">No trades yet. The agent enters only when every rule of the playbook strategy passes on a closed candle.</td></tr>';}
+
+/* chart */
+let CH=null,CS=null,SR={},LINES=[],CG=300;
+const th=()=>document.documentElement.dataset.theme;
+const copt=()=>({layout:{background:{color:'transparent'},textColor:th()==='dark'?'#8793a3':'#5d6b7a'},grid:{vertLines:{color:th()==='dark'?'#1b2531':'#e3ebef'},horzLines:{color:th()==='dark'?'#1b2531':'#e3ebef'}},timeScale:{timeVisible:true,secondsVisible:false},rightPriceScale:{borderVisible:false}});
+function drawChart(m,r){const ec=D[m.s][r.eg];
+ if(!window.LightweightCharts){$('#chart').innerHTML='<p class="err">Chart library could not load. Check your connection.</p>';return;}
+ if(!CH){CH=LightweightCharts.createChart($('#chart'),{...copt(),autoSize:true});CS=CH.addCandlestickSeries({upColor:'#3ddc97',downColor:'#ff5f6d',borderVisible:false,wickUpColor:'#3ddc97',wickDownColor:'#ff5f6d'});
+  [['e50','#32d4c6',2],['e200','#f5b942',2],['bu','#8793a3',1],['bl','#8793a3',1]].forEach(([k,c,w])=>SR[k]=CH.addLineSeries({color:c,lineWidth:w,priceLineVisible:false,lastValueVisible:false}));}
+ CG=r.eg;const cl=ec.map(k=>k.close),B=bbS(cl),L=(a,f)=>a.map((v,i)=>({time:ec[i].time,value:f?f(v,i):v})).filter(x=>x.value!=null);
+ CS.setData(ec);SR.e50.setData(L(ema(cl,50)));SR.e200.setData(L(ema(cl,200)));const bb=r.st==='rev'||r.st==='sq';SR.bu.setData(bb?L(B,x=>x&&x.u):[]);SR.bl.setData(bb?L(B,x=>x&&x.l):[]);
+ LINES.forEach(l=>CS.removePriceLine(l));LINES=[];const t=SIG.find(s=>s.sym===m.s&&s.st==='open');
+ if(t)[['Entry',t.e,'#9aa7b5'],['Stop',t.sl,'#ff5f6d'],['Target',t.tp,'#3ddc97']].forEach(([a,p,c])=>LINES.push(CS.createPriceLine({price:p,color:c,lineWidth:1,lineStyle:2,title:a})));
+ CH.timeScale().fitContent();}
+
+/* live ticks build candles on M5, M15, H1; a new bucket means the previous candle closed */
+function onTick(t){const q=+t.quote,s=t.symbol,pv=LIVE[s],C=D[s],cl=new Set();LIVE[s]=q;LT[s]=Date.now();
+ if(C)GS.forEach(g=>{const a=C[g];if(!a||!a.length)return;const L=a[a.length-1],bk=Math.floor(t.epoch/g)*g;if(bk===L.time){L.high=Math.max(L.high,q);L.low=Math.min(L.low,q);L.close=q;}else if(bk>L.time){a.push({time:bk,open:q,high:q,low:q,close:q});cl.add(g);}});
+ const el=document.getElementById('tk-'+s);if(el){el.textContent=fmt(q,3);el.className=pv!=null&&q!==pv?(q>pv?'up':'down'):'';}
+ check(s,q);const m=MK.find(k=>k.s===s);if(cl.size)agent(m,cl);
+ if(s===SEL){$('#price').textContent=fmt(q,3);if(cl.size)analyze();else if(CS&&C&&C[CG])CS.update(C[CG][C[CG].length-1]);}}
+
+/* render */
+const reg=r=>r<.8?['Quiet','wait']:r<1.2?['Normal','']:r<1.6?['Expanding','up']:['Explosive','down'];
+function tabs(){$('#tabs').innerHTML=MK.map(m=>'<div class="tab'+(m.s===SEL?' on':'')+'" tabindex="0" role="button" data-s="'+m.s+'"><b>'+m.n+'</b><span id="tk-'+m.s+'">'+(LIVE[m.s]!=null?fmt(LIVE[m.s],3):'-')+'</span></div>').join('');}
+function scanView(){$('#scan').innerHTML=MK.map(m=>{const r=((AG[m.s]||{}).res||[])[0],t=SIG.find(s=>s.sym===m.s&&s.st==='open');if(!r)return'<tr class="row" data-s="'+m.s+'"><td><b>'+m.n+'</b></td><td colspan="4" class="sub">Loading…</td></tr>';const g=reg(r.ratio),gt=gate(m);
+  const stt=t?'<b class="'+(t.dir==='BUY'?'up':'down')+'">In '+t.dir+' trade</b>':r.go?'<b class="'+(r.side>0?'up':'down')+'">'+(r.side>0?'BUY':'SELL')+' signal</b>':'<b class="wait">'+r.ok+' of '+r.conds.length+' rules</b>';
+  return'<tr class="row" data-s="'+m.s+'"><td><b>'+m.n+'</b></td><td>'+(LIVE[m.s]!=null?fmt(LIVE[m.s],3):'-')+'</td><td class="'+g[1]+'">'+g[0]+' ('+fmt(r.ratio)+'x)</td><td>'+SN[r.st]+' <span class="sub">'+TN[r.bg]+'/'+TN[r.eg]+'</span></td><td>'+stt+(gt&&!t?' <span class="sub">'+gt+'</span>':'')+'</td></tr>';}).join('');}
+function analyze(){const m=MK.find(k=>k.s===SEL),R=(AG[SEL]||{}).res||[];tabs();$('#mname').textContent=m.n+' ('+m.s+')';if(LIVE[m.s]!=null)$('#price').textContent=fmt(LIVE[m.s],3);
+ const r=R[VI]||R[0];if(!r){$('#vword').textContent='Loading';$('#vword').className='vword wait';return;}
+ const g=reg(r.ratio),t=SIG.find(s=>s.sym===m.s&&s.st==='open'),gt=gate(m),pc=m.pl[VI]||m.pl[0],S=SN[r.st];
+ $('#regime').innerHTML='Volatility now: <b class="'+g[1]+'">'+g[0]+'</b> ('+fmt(r.ratio)+'x its recent norm on '+TN[r.eg]+'). Agent re-evaluates on every closed candle.';
+ $('#mmeta').textContent='ATR 14 on '+TN[r.eg]+': '+fmt(r.A,3)+' points. Stop for this setup: '+fmt(r.sl,3)+' points.';
+ const vw=$('#vword'),dirc=x=>x>0?'up':'down';
+ if(t){vw.textContent='In '+(t.dir==='BUY'?'buy':'sell');vw.className='vword '+(t.dir==='BUY'?'up':'down');}else if(r.go&&!gt){vw.textContent=r.side>0?'Buy':'Sell';vw.className='vword '+dirc(r.side);}else{vw.textContent=gt&&r.go?'Blocked':'Stand aside';vw.className='vword wait';}
+ $('#mbar').style.width=Math.round(r.ok/r.conds.length*100)+'%';$('#mbar').style.background=r.go?'var(--'+(r.side>0?'up':'down')+')':'var(--wait)';
+ $('#vsub').textContent=gt?gt+'.':r.ok+' of '+r.conds.length+' playbook rules pass for '+S+'.';
+ $('#auto-tf').innerHTML='Playbook for '+m.n+' applied automatically: <b>'+TN[r.bg]+' bias, '+TN[r.eg]+' entry</b>'+(r.half?' (secondary strategy, half size)':'')+'.';
+ $('#pairs').innerHTML=R.map((x,i)=>x?'<span class="pill'+(i===(R[VI]?VI:0)?' on':'')+'" data-i="'+i+'" tabindex="0" style="cursor:pointer">'+(i?'Secondary: ':'Primary: ')+SN[x.st]+' ('+(x.go?'SIGNAL':x.ok+'/'+x.conds.length)+')</span>':'').join('');
+ $('#ck').innerHTML=r.conds.map(c=>'<li><i class="'+(c[1]?'up':'down')+'">'+(c[1]?'✓':'✗')+'</i><span>'+c[0]+'</span></li>').join('');
+ const row=(a,b,c)=>'<dt>'+a+'</dt><dd'+(c?' class="'+c+'"':'')+'>'+b+'</dd>',rp=rpct(m,r.half),bal=+$('#bal').value||0,rd=bal*rp/100;
+ if(t){const gg=t.dir==='BUY'?1:-1,rn=LIVE[m.s]?gg*(LIVE[m.s]-t.e)/t.rk:0;$('#plan').innerHTML=row('Open trade',t.dir,gg>0?'up':'down')+row('Strategy',t.stn)+row('Entry',fmt(t.e,3))+row('Stop loss',fmt(t.sl,3)+(t.be?' (break-even)':''),'down')+row('Exit target',fmt(t.tp,3),'up')+row('Live result',(rn>0?'+':'')+fmt(rn,2)+'R',rn>=0?'up':'down')+row('Management','Stop moves to entry at +1R');}
+ else if(r.go)$('#plan').innerHTML=row('Signal',r.side>0?'Buy':'Sell',dirc(r.side))+row('Strategy',S)+row('Entry','On next candle open / now')+row('Stop distance',fmt(r.sl,3)+' points','down')+row('Reward',fmt(r.rr,1)+'R')+row('Stop to break-even','at +1R');
+ else $('#plan').innerHTML=row('Direction','No trade','wait')+row('Strategy',S)+row('Waiting for',(r.conds.find(c=>!c[1])||[''])[0]);
+ $('#riskd').textContent='$'+fmt(rd);$('#riskn').textContent=fmt(rp,2)+'% of balance'+(r.half?' (half size)':'')+(m.hz?' (cut by a third for 1s index)':'')+'. On Multipliers set stop loss amount to this and take profit to '+fmt(r.rr,1)+' times it. Daily cap '+RK[m.v].cap+'%.';
+ $('#psub').textContent=m.n+': '+SN[(R[0]||r).st]+' is primary, '+SN[(R[1]||r).st]+' is secondary.';
+ $('#play').innerHTML='<p><b>Why this market:</b> '+PERS[m.v]+(m.hz?' It ticks every second, so candles are noisier: same rules, position cut by about a third.':'')+'</p><p><b>'+S+':</b> '+SH[r.st]+'</p><ul><li>Risk '+fmt(RK[m.v].r,2)+'% per trade, stop for the day at '+RK[m.v].cap+'% lost'+(RK[m.v].mt?', max '+RK[m.v].mt+' trades a day':'')+'.</li><li>Two losses in a row on this index switches it off for the session. No martingale, never widen a stop.</li><li>All settings are untested starting points from the Volatility Playbook. The tracker below measures whether they have an edge.</li></ul>';
+ $('#ctitle').innerHTML=m.n+', '+TN[r.eg]+' candles with EMA 50 (teal), EMA 200 (amber)'+((r.st==='rev'||r.st==='sq')?' and Bollinger Bands':'')+' · <a href="https://charts.deriv.com" target="_blank" rel="noopener" style="color:var(--acc)">Open charts.deriv.com</a>';
+ if(D[m.s][r.eg])drawChart(m,r);dview(m,r);renderSig();scanView();$('#warn').style.display='none';}
+
+let CV=1;
+function dview(m,r){const f=$('#dframe'),nm=m.n+' Index',bb=r.st==='rev'||r.st==='sq',u='https://charts.deriv.com/deriv?symbol='+m.s;
+ $('#dsetup').innerHTML='<b>Match this chart to the agent:</b> symbol <b>'+nm+'</b>, timeframe <b>'+TN[r.eg]+'</b> (bias '+TN[r.bg]+'), indicators EMA 50, EMA 200, RSI 14, ATR 14'+(bb?', Bollinger Bands 20/2':'')+(r.st==='brk'?', mark the 20-candle range high/low':'')+'. Strategy: <b>'+SN[r.st]+'</b>. <a href="'+u+'" target="_blank" rel="noopener" style="color:var(--acc)">Open in a new tab</a> if this panel stays blank (the site may block embedding).';
+ if(CV===2&&f.dataset.s!==m.s){f.dataset.s=m.s;f.src=u;}}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-c]');if(!c)return;CV=+c.dataset.c;$('#chart').style.display=CV===1?'':'none';$('#dview').style.display=CV===2?'':'none';$('#cb1').classList.toggle('on',CV===1);$('#cb2').classList.toggle('on',CV===2);analyze();});
+async function load(first){const q=[...MK].sort((a,b)=>(b.s===SEL)-(a.s===SEL)),run=async()=>{while(q.length){const m=q.shift();D[m.s]=D[m.s]||{};for(const g of GS){const c=await hq(m.s,g);if(c)D[m.s][g]=c;}agent(m,null);if(m.s===SEL)analyze();else scanView();}};await Promise.all([run(),run(),run()]);}
+async function init(){if(booting)return;booting=true;try{await connect();await load();}catch(e){$('#warn').style.display='block';$('#warn').textContent='Could not connect to Deriv. Retrying automatically…';}booting=false;analyze();}
+async function resync(s){const m=MK.find(k=>k.s===s);for(const g of GS){const c=await hq(s,g);if(c)D[s][g]=c;}agent(m,null);if(SEL===s)analyze();}
+function pick(e){const p=e.target.closest('[data-i]');if(p){VI=+p.dataset.i;analyze();return;}const t=e.target.closest('[data-s]');if(!t)return;SEL=t.dataset.s;VI=0;analyze();resync(SEL);scrollTo({top:0,behavior:'smooth'});}
+['#tabs','#scan','#pairs'].forEach(s=>$(s).addEventListener('click',pick));$('#tabs').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(e);}});
+$('#refresh').addEventListener('click',async()=>{const b=$('#refresh');b.disabled=true;b.classList.add('spin');if(!open)await init();else await load();b.disabled=false;b.classList.remove('spin');});
+$('#bal').addEventListener('input',analyze);$('#clear').addEventListener('click',()=>{SIG=[];save();renderSig();analyze();});
+setInterval(()=>{const a=LT[SEL]?Math.round((Date.now()-LT[SEL])/1000):null;$('#stamp').innerHTML=open?(a!=null&&a<15?'<b class="up">● Live</b>, last tick '+a+'s ago':'<b class="down">Feed stalled</b>, reconnecting if needed'):'Connecting…';scanView();renderSig();},2000);
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('vol-theme',t);}catch(e){}$('#theme').textContent=t==='dark'?'Light mode':'Dark mode';if(CH)CH.applyOptions(copt());}
+let sv=null;try{sv=localStorage.getItem('vol-theme');}catch(e){}
+setTheme(sv||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'));$('#theme').addEventListener('click',()=>setTheme(th()==='dark'?'light':'dark'));
+tabs();renderSig();init();
+</script>
+</body>
+</html>
